@@ -1,0 +1,23 @@
+.planetinfo {
+    display: block;
+    width: 30%;
+    border: 3px solid yellow;
+    border-radius: 5px;
+}
+
+.planetinfo h2 {
+    font-size: 35pt;
+}
+
+.planetinfo h4 {
+    font-size: 18pt;
+}
+
+.planetinfo p {
+    font-size: 16pt;
+}
+
+#collapseButton {
+    width: 100px;
+    font-size: 14pt;
+}
