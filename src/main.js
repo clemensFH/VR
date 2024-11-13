@@ -30,8 +30,13 @@ scene.add(stars);
 // Sun with Glow Effect
 const textureLoader = new THREE.TextureLoader();
 const sunGeometry = new THREE.SphereGeometry(5, 32, 32);
-const sunMaterial = new THREE.MeshBasicMaterial({ map: textureLoader.load('/assets/textures/sun.jpg') });
+const sunMaterial = new THREE.MeshBasicMaterial({ map: textureLoader.load('/sun.jpg') });
 const sun = new THREE.Mesh(sunGeometry, sunMaterial);
+// Sun userData
+sun.userData = {
+	name: 'Sun',
+	info: 'The Sun is the star at the center of the Solar System. It provides light and heat to all planets. It is a nearly perfect sphere of hot plasma and is by far the most important source of energy for life on Earth. The Sun has no solid surface and consists mostly of hydrogen and helium.'
+};
 
 // Glow Effect for the Sun
 const createGlow = (innerRadius, outerRadius, color) => {
@@ -73,6 +78,11 @@ const sunGlow = createGlow(5, 10, 0xffff00);
 sun.add(sunGlow);
 scene.add(sun);
 
+// Add name label for the Sun
+const sunLabel = createTextLabel('Sun');
+sunLabel.position.set(0, 6, 0);
+sun.add(sunLabel);
+
 // Colors for planets and their orbits
 const orbitColors = {
 	'Mercury': 0xa9a9a9, // Gray
@@ -90,62 +100,61 @@ const planets = [];
 const planetData = [
 	{
 		name: 'Mercury',
-		texture: '/assets/textures/mercury.jpg',
+		texture: '/mercury.jpg',
 		size: 0.383,
 		distance: 10,
-		info: 'Mercury is the smallest planet in the Solar System and closest to the Sun. It has no atmosphere, leading to extreme temperature variations.'
+		info: 'Mercury is the smallest planet in the Solar System and closest to the Sun. It has no atmosphere, leading to extreme temperature variations. Mercury has a very thin atmosphere composed mostly of oxygen, sodium, and hydrogen. It has a heavily cratered surface, similar to the Moon. Mercury has no moons or rings. A day on Mercury (one full rotation) takes 59 Earth days, and a year (one orbit around the Sun) takes 88 Earth days.'
 	},
 	{
 		name: 'Venus',
-		texture: '/assets/textures/venus.jpg',
+		texture: '/venus.jpg',
 		size: 0.949,
 		distance: 15,
-		info: 'Venus is the hottest planet due to its thick atmosphere of carbon dioxide. It rotates in the opposite direction of most planets.'
+		info: 'Venus is the hottest planet due to its thick atmosphere of carbon dioxide. It rotates in the opposite direction of most planets. Venus has a surface temperature of around 465 degrees Celsius (869 degrees Fahrenheit). It has a thick atmosphere composed mainly of carbon dioxide, with clouds of sulfuric acid. Venus has no moons or rings. A day on Venus (one full rotation) takes 243 Earth days, and a year (one orbit around the Sun) takes 225 Earth days.'
 	},
 	{
 		name: 'Earth',
-		texture: '/assets/textures/earth.jpg',
+		texture: '/earth.jpg',
 		size: 1,
 		distance: 20,
-		info: 'Earth is the only planet known to support life. Its surface is 71% water, and it has a single moon, the Moon.'
+		info: 'Earth is the only planet known to support life. Its surface is 71% water, and it has a single moon, the Moon. Earth has a diverse climate and a protective atmosphere composed mainly of nitrogen and oxygen. It has a magnetic field that protects it from solar radiation. Earth has one moon and no rings. A day on Earth (one full rotation) takes 24 hours, and a year (one orbit around the Sun) takes 365.25 days.'
 	},
 	{
 		name: 'Mars',
-		texture: '/assets/textures/mars.jpg',
+		texture: '/mars.jpg',
 		size: 0.532,
 		distance: 25,
-		info: 'Mars is known as the "Red Planet" due to its iron oxide-rich soil. It hosts the largest volcano in the Solar System, Olympus Mons.'
+		info: 'Mars is known as the "Red Planet" due to its iron oxide-rich soil. It hosts the largest volcano in the Solar System, Olympus Mons. Mars has a thin atmosphere composed mainly of carbon dioxide. It has polar ice caps made of water and carbon dioxide. Mars has two small moons, Phobos and Deimos, and no rings. A day on Mars (one full rotation) takes 24.6 hours, and a year (one orbit around the Sun) takes 687 Earth days.'
 	},
 	{
 		name: 'Jupiter',
-		texture: '/assets/textures/jupiter.jpg',
+		texture: '/jupiter.jpg',
 		size: 2,
 		distance: 30,
-		info: 'Jupiter is the largest planet in the Solar System. It has over 79 moons and features a giant storm known as the Great Red Spot.'
+		info: 'Jupiter is the largest planet in the Solar System. It has over 79 moons and features a giant storm known as the Great Red Spot. Jupiter has a thick atmosphere composed mainly of hydrogen and helium. It has a strong magnetic field and faint rings. Jupiter has 79 known moons, including the four largest: Io, Europa, Ganymede, and Callisto. A day on Jupiter (one full rotation) takes about 10 hours, and a year (one orbit around the Sun) takes 12 Earth years.'
 	},
 	{
 		name: 'Saturn',
-		texture: '/assets/textures/saturn.jpg',
+		texture: '/saturn.jpg',
 		size: 1.8,
 		distance: 35,
-		info: 'Saturn is famous for its stunning ring system made of ice and rock. It has 83 moons, including the large moon Titan.'
+		info: 'Saturn is famous for its stunning ring system made of ice and rock. It has 83 moons, including the large moon Titan. Saturn has a thick atmosphere composed mainly of hydrogen and helium. It has a strong magnetic field and a complex ring system. Saturn has 83 known moons, with Titan being the largest. A day on Saturn (one full rotation) takes about 10.7 hours, and a year (one orbit around the Sun) takes 29.5 Earth years.'
 	},
 	{
 		name: 'Uranus',
-		texture: '/assets/textures/uranus.jpg',
+		texture: '/uranus.jpg',
 		size: 0.8,
 		distance: 40,
-		info: 'Uranus is a blue-green planet due to methane in its atmosphere. It rotates on its side, making its axis nearly horizontal.'
+		info: 'Uranus is a blue-green planet due to methane in its atmosphere. It rotates on its side, making its axis nearly horizontal. Uranus has a thick atmosphere composed mainly of hydrogen, helium, and methane. It has a faint ring system and a strong magnetic field. Uranus has 27 known moons, with Titania being the largest. A day on Uranus (one full rotation) takes about 17.2 hours, and a year (one orbit around the Sun) takes 84 Earth years.'
 	},
 	{
 		name: 'Neptune',
-		texture: '/assets/textures/neptune.jpg',
+		texture: '/neptune.jpg',
 		size: 0.8,
 		distance: 45,
-		info: 'Neptune, the farthest planet from the Sun, has the fastest winds in the Solar System, reaching speeds of over 2,100 km/h.'
+		info: 'Neptune, the farthest planet from the Sun, has the fastest winds in the Solar System, reaching speeds of over 2,100 km/h. Neptune has a thick atmosphere composed mainly of hydrogen, helium, and methane. It has a faint ring system and a strong magnetic field. Neptune has 14 known moons, with Triton being the largest. A day on Neptune (one full rotation) takes about 16 hours, and a year (one orbit around the Sun) takes 165 Earth years.'
 	},
 ];
-
 
 // Add Planets to the Scene
 planetData.forEach((data) => {
@@ -168,7 +177,27 @@ planetData.forEach((data) => {
 	const orbit = new THREE.Mesh(orbitGeometry, orbitMaterial);
 	orbit.rotation.x = Math.PI / 2; // Rotate to lie flat
 	scene.add(orbit);
+
+	// Add name label for the planet
+	const planetLabel = createTextLabel(data.name);
+	planetLabel.position.set(0, data.size + 1, 0);
+	planet.add(planetLabel);
 });
+
+// Function to create text labels
+function createTextLabel(text) {
+	const canvas = document.createElement('canvas');
+	const context = canvas.getContext('2d');
+	context.font = 'Bold 20px Arial';
+	context.fillStyle = 'white';
+	context.fillText(text, 0, 20);
+
+	const texture = new THREE.CanvasTexture(canvas);
+	const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
+	const sprite = new THREE.Sprite(spriteMaterial);
+	sprite.scale.set(5, 2.5, 5);
+	return sprite;
+}
 
 // Animation
 const animate = () => {
