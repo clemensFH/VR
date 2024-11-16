@@ -90,7 +90,7 @@ planetData.forEach((data) => {
 	const material = new THREE.MeshBasicMaterial({ map: textureLoader.load(data.texture) });
 	const planet = new THREE.Mesh(geometry, material);
 	planet.position.x = data.distance;
-	planet.userData = { name: data.name, size: data.size, distance: data.distance, info: data.info };
+	planet.userData = data;
 	planets.push(planet);
 	scene.add(planet);
 
@@ -159,7 +159,7 @@ function onMouseClick(event) {
 
 	raycaster.setFromCamera(mouse, camera);
 	const intersects = raycaster.intersectObjects([sun, ...planets]);
-
+	//console.log(data)
 	if (intersects.length > 0) {
 		const object = intersects[0].object;
 		const data = object.userData;
@@ -169,8 +169,14 @@ function onMouseClick(event) {
         infoDiv.style.display = 'block';
 		infoDiv.innerHTML = `
 			<h2>${data.name}</h2>
-			<h4><strong>Details:</strong></h4>
 			<p>${data.info}</p>
+			<h4><strong>Details:</strong></h4>
+			<p><strong>Speed:</strong> ${data.speed}</p>
+			<p><strong>Radius:</strong> ${data.radius}</p>
+			<p><strong>Year:</strong> ${data.siderealYear}</p>
+			<p><strong>Surface:</strong> ${data.surface}</p>
+			<p><strong>Volume:</strong> ${data.volume}</p>
+			<p><strong>Radius:</strong> ${data.mass}</p>
 			<button id="collapseButton">Collapse</button>
 		`;
         infoDiv.className = "planetinfo";
@@ -178,7 +184,6 @@ function onMouseClick(event) {
 		// Add event listener to collapse button
 		document.getElementById('collapseButton').addEventListener('click', () => {
 			infoDiv.style.display = 'none';
-            console.log("hi")
 		});
 
 		// Zoom into object
