@@ -42,6 +42,7 @@ sun.userData = {
 	siderealYear: 'N/A',
 	surface: '6.09x10^12 km²',
 	volume: '1.41x10^18 km³',
+	mass: '2×1030 kg',
 };
 
 scene.add(sun);
@@ -51,33 +52,42 @@ const planets = [];
 const planetData = getPlanetsData();
 
 
-// Add Planets to the Scene
+const today = new Date();
+const referenceDate = new Date('2000-01-01'); // Reference date
+const daysSinceReference = Math.floor((today - referenceDate) / (1000 * 60 * 60 * 24)); // Days since reference
+
 planetData.forEach((data) => {
-	const geometry = new THREE.SphereGeometry(data.size, 32, 32);
-	const material = new THREE.MeshBasicMaterial({ map: textureLoader.load(data.texture) });
-	const planet = new THREE.Mesh(geometry, material);
-	planet.position.x = data.distance;
-	planet.userData = data;
-	planets.push(planet);
-	scene.add(planet);
+    const geometry = new THREE.SphereGeometry(data.size, 32, 32);
+    const material = new THREE.MeshBasicMaterial({ map: textureLoader.load(data.texture) });
+    const planet = new THREE.Mesh(geometry, material);
 
-	// Create Colored Orbit Line
-	const orbitGeometry = new THREE.RingGeometry(data.distance - 0.05, data.distance + 0.05, 64);
-	const orbitMaterial = new THREE.MeshBasicMaterial({
-		color: data.orbitColor,
-		side: THREE.DoubleSide,
-		transparent: true,
-		opacity: 0.8
-	});
-	const orbit = new THREE.Mesh(orbitGeometry, orbitMaterial);
-	orbit.rotation.x = Math.PI / 2; // Rotate to lie flat
-	scene.add(orbit);
+    // Calculate initial angle
+    const angle = ((daysSinceReference % data.orbitalPeriod) / data.orbitalPeriod) * 2 * Math.PI;
+    planet.position.x = data.distance * Math.cos(angle);
+    planet.position.z = data.distance * Math.sin(angle);
+    planet.userData = data;
 
-	// Add name label for the planet
-	const planetLabel = createTextLabel(data.name);
-	planetLabel.position.set(0, data.size + 1, 0);
-	planet.add(planetLabel);
+    planets.push(planet);
+    scene.add(planet);
+
+    // Create Orbit Line
+    const orbitGeometry = new THREE.RingGeometry(data.distance - 0.05, data.distance + 0.05, 64);
+    const orbitMaterial = new THREE.MeshBasicMaterial({
+        color: data.orbitColor,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.8,
+    });
+    const orbit = new THREE.Mesh(orbitGeometry, orbitMaterial);
+    orbit.rotation.x = Math.PI / 2; // Rotate to lie flat
+    scene.add(orbit);
+
+    // Add label
+    const label = createTextLabel(data.name);
+    label.position.set(0, data.size + 1, 0);
+    planet.add(label);
 });
+
 
 // Function to create text labels
 function createTextLabel(text) {
@@ -100,41 +110,135 @@ function createTextLabel(text) {
 	return sprite;
 }
 
-// Animation
-const animate = () => {
-	requestAnimationFrame(animate);
+const dateDisplay = document.createElement('div');
+dateDisplay.innerText = `Date: ${today.toDateString()}`;
+dateDisplay.style.position = 'absolute';
+dateDisplay.style.top = '10px';
+dateDisplay.style.left = '10px';
+dateDisplay.style.color = 'white';
+dateDisplay.style.fontFamily = 'Arial';
+dateDisplay.style.fontSize = '16px';
+dateDisplay.style.zIndex = '1';
+document.body.appendChild(dateDisplay);
 
-	// Rotate planets around the sun
-	planets.forEach((planet, index) => {
-		const speed = 0.01 + index * 0.01;
-		planet.position.x = Math.cos(speed * Date.now() * 0.0001) * planet.userData.distance;
-		planet.position.z = Math.sin(speed * Date.now() * 0.0001) * planet.userData.distance;
-	});
 
-	controls.update();
-	renderer.render(scene, camera);
+// Create a speed slider
+const speedSlider = document.createElement('input');
+speedSlider.type = 'range';
+speedSlider.min = '1'; // Minimum multiplier
+speedSlider.max = '50'; // Maximum multiplier for high speeds
+speedSlider.step = '1'; // Step for smoother control
+speedSlider.value = '1'; // Default multiplier
+speedSlider.style.position = 'absolute';
+speedSlider.style.bottom = '20px';
+speedSlider.style.left = '50%';
+speedSlider.style.transform = 'translateX(-50%)';
+speedSlider.style.zIndex = '1';
+document.body.appendChild(speedSlider);
+
+// Create a label for the slider
+const speedLabel = document.createElement('div');
+speedLabel.innerText = `Speed: ${speedSlider.value}x`;
+speedLabel.style.position = 'absolute';
+speedLabel.style.bottom = '50px';
+speedLabel.style.left = '50%';
+speedLabel.style.transform = 'translateX(-50%)';
+speedLabel.style.color = 'white';
+speedLabel.style.fontFamily = 'Arial';
+speedLabel.style.zIndex = '1';
+document.body.appendChild(speedLabel);
+
+// Update label on slider change
+speedSlider.addEventListener('input', () => {
+    speedLabel.innerText = `Speed: ${speedSlider.value}x`;
+});
+
+
+let lastTime = 0;
+let selectedObject = null;
+
+const animate = (currentTime) => {
+    requestAnimationFrame(animate);
+
+    // Calculate time delta for smooth animation
+    const deltaTime = currentTime - lastTime;
+    lastTime = currentTime;
+
+    // Get the speed multiplier from the slider
+    const speedMultiplier = parseFloat(speedSlider.value);
+
+    // Rotate planets around the Sun
+    planets.forEach((planet, index) => {
+        const baseSpeed = 0.01 + index * 0.01;
+        const adjustedSpeed = baseSpeed * speedMultiplier;
+
+        // Use deltaTime to smooth movement
+        const angle = adjustedSpeed * deltaTime * 0.0001;
+        const currentX = planet.position.x;
+        const currentZ = planet.position.z;
+
+        // Update position using a rotation matrix
+        planet.position.x = currentX * Math.cos(angle) - currentZ * Math.sin(angle);
+        planet.position.z = currentX * Math.sin(angle) + currentZ * Math.cos(angle);
+    });
+
+    // If an object is selected, keep the camera focused on it
+    if (selectedObject) {
+        controls.target.copy(selectedObject.position);
+        controls.update();
+    }
+
+    renderer.render(scene, camera);
 };
-animate();
+animate(0);
+
+const resetButton = document.createElement('button');
+resetButton.innerText = 'Reset View';
+resetButton.style.position = 'absolute';
+resetButton.style.top = '20px';
+resetButton.style.right = '20px';
+resetButton.style.zIndex = '1';
+resetButton.style.padding = '10px 20px';
+resetButton.style.fontSize = '16px';
+document.body.appendChild(resetButton);
+
+// Reset the view on button click
+resetButton.addEventListener('click', () => {
+    selectedObject = null;
+
+    // Smoothly zoom out to the default view
+    gsap.to(camera.position, {
+        x: 0,
+        y: 0,
+        z: 50,
+        duration: 1.5,
+        onUpdate: () => controls.update(),
+    });
+
+    controls.target.set(0, 0, 0); // Reset target to the center
+    controls.update();
+});
+
 
 // Raycaster for Click Events
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
 function onMouseClick(event) {
-	mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-	mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-	raycaster.setFromCamera(mouse, camera);
-	const intersects = raycaster.intersectObjects([sun, ...planets]);
+    raycaster.setFromCamera(mouse, camera);
+    const intersects = raycaster.intersectObjects([sun, ...planets]);
 
-	if (intersects.length > 0) {
-		const object = intersects[0].object;
-		const data = object.userData;
+    if (intersects.length > 0) {
+        const object = intersects[0].object;
+        const data = object.userData;
 
-		// Show Info
-		const infoDiv = document.getElementById('info');
-		infoDiv.style.display = 'block';
-		infoDiv.innerHTML = `
+        // Show Info
+        const infoDiv = document.getElementById('info');
+        infoDiv.style.display = 'block';
+        infoDiv.innerHTML = `
             <h2>${data.name}</h2>
             <p>${data.info}</p>
             <h4><strong>Details:</strong></h4>
@@ -146,26 +250,25 @@ function onMouseClick(event) {
             <p><strong>Mass:</strong> ${data.mass}</p>
             <button id="collapseButton">Collapse</button>
         `;
-		infoDiv.className = "planetinfo";
+        infoDiv.className = "planetinfo";
 
-		// Add event listener to collapse button
-		document.getElementById('collapseButton').addEventListener('click', () => {
-			infoDiv.style.display = 'none';
-		});
+        // Add event listener to collapse button
+        document.getElementById('collapseButton').addEventListener('click', () => {
+            infoDiv.style.display = 'none';
+        });
 
-		// Update Camera Target
-		controls.target.copy(object.position); // Set the target to the clicked object
-		controls.update();
+        // Set the selected object
+        selectedObject = object;
 
-		// Smooth Camera Zoom
-		gsap.to(camera.position, {
-			x: object.position.x + 10,
-			y: object.position.y + 10,
-			z: object.position.z + 10,
-			duration: 1.5,
-			onUpdate: () => controls.update(),
-		});
-	}
+        // Smoothly zoom into the object
+        gsap.to(camera.position, {
+            x: object.position.x + 10,
+            y: object.position.y + 10,
+            z: object.position.z + 10,
+            duration: 1.5,
+            onUpdate: () => controls.update(),
+        });
+    }
 }
 
 
