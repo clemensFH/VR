@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import { getPlanetsData } from '../utils';
 
 // Scene, Camera, and Renderer
 const scene = new THREE.Scene();
@@ -78,83 +79,10 @@ const sunGlow = createGlow(5, 10, 0xffff00);
 sun.add(sunGlow);
 scene.add(sun);
 
-// Add name label for the Sun
-const sunLabel = createTextLabel('Sun');
-sunLabel.position.set(0, 6, 0);
-sun.add(sunLabel);
-
-// Colors for planets and their orbits
-const orbitColors = {
-	'Mercury': 0xa9a9a9, // Gray
-	'Venus': 0xffe4b5, // Light Golden
-	'Earth': 0x1e90ff, // Blue
-	'Mars': 0xff4500, // Red
-	'Jupiter': 0xffa500, // Orange
-	'Saturn': 0xffd700, // Yellow
-	'Uranus': 0x00ffff, // Cyan
-	'Neptune': 0x4682b4 // Steel Blue
-};
-
 // Planets
 const planets = [];
-const planetData = [
-	{
-		name: 'Mercury',
-		texture: '/mercury.jpg',
-		size: 0.383,
-		distance: 10,
-		info: 'Mercury is the smallest planet in the Solar System and closest to the Sun. It has no atmosphere, leading to extreme temperature variations. Mercury has a very thin atmosphere composed mostly of oxygen, sodium, and hydrogen. It has a heavily cratered surface, similar to the Moon. Mercury has no moons or rings. A day on Mercury (one full rotation) takes 59 Earth days, and a year (one orbit around the Sun) takes 88 Earth days.'
-	},
-	{
-		name: 'Venus',
-		texture: '/venus.jpg',
-		size: 0.949,
-		distance: 15,
-		info: 'Venus is the hottest planet due to its thick atmosphere of carbon dioxide. It rotates in the opposite direction of most planets. Venus has a surface temperature of around 465 degrees Celsius (869 degrees Fahrenheit). It has a thick atmosphere composed mainly of carbon dioxide, with clouds of sulfuric acid. Venus has no moons or rings. A day on Venus (one full rotation) takes 243 Earth days, and a year (one orbit around the Sun) takes 225 Earth days.'
-	},
-	{
-		name: 'Earth',
-		texture: '/earth.jpg',
-		size: 1,
-		distance: 20,
-		info: 'Earth is the only planet known to support life. Its surface is 71% water, and it has a single moon, the Moon. Earth has a diverse climate and a protective atmosphere composed mainly of nitrogen and oxygen. It has a magnetic field that protects it from solar radiation. Earth has one moon and no rings. A day on Earth (one full rotation) takes 24 hours, and a year (one orbit around the Sun) takes 365.25 days.'
-	},
-	{
-		name: 'Mars',
-		texture: '/mars.jpg',
-		size: 0.532,
-		distance: 25,
-		info: 'Mars is known as the "Red Planet" due to its iron oxide-rich soil. It hosts the largest volcano in the Solar System, Olympus Mons. Mars has a thin atmosphere composed mainly of carbon dioxide. It has polar ice caps made of water and carbon dioxide. Mars has two small moons, Phobos and Deimos, and no rings. A day on Mars (one full rotation) takes 24.6 hours, and a year (one orbit around the Sun) takes 687 Earth days.'
-	},
-	{
-		name: 'Jupiter',
-		texture: '/jupiter.jpg',
-		size: 2,
-		distance: 30,
-		info: 'Jupiter is the largest planet in the Solar System. It has over 79 moons and features a giant storm known as the Great Red Spot. Jupiter has a thick atmosphere composed mainly of hydrogen and helium. It has a strong magnetic field and faint rings. Jupiter has 79 known moons, including the four largest: Io, Europa, Ganymede, and Callisto. A day on Jupiter (one full rotation) takes about 10 hours, and a year (one orbit around the Sun) takes 12 Earth years.'
-	},
-	{
-		name: 'Saturn',
-		texture: '/saturn.jpg',
-		size: 1.8,
-		distance: 35,
-		info: 'Saturn is famous for its stunning ring system made of ice and rock. It has 83 moons, including the large moon Titan. Saturn has a thick atmosphere composed mainly of hydrogen and helium. It has a strong magnetic field and a complex ring system. Saturn has 83 known moons, with Titan being the largest. A day on Saturn (one full rotation) takes about 10.7 hours, and a year (one orbit around the Sun) takes 29.5 Earth years.'
-	},
-	{
-		name: 'Uranus',
-		texture: '/uranus.jpg',
-		size: 0.8,
-		distance: 40,
-		info: 'Uranus is a blue-green planet due to methane in its atmosphere. It rotates on its side, making its axis nearly horizontal. Uranus has a thick atmosphere composed mainly of hydrogen, helium, and methane. It has a faint ring system and a strong magnetic field. Uranus has 27 known moons, with Titania being the largest. A day on Uranus (one full rotation) takes about 17.2 hours, and a year (one orbit around the Sun) takes 84 Earth years.'
-	},
-	{
-		name: 'Neptune',
-		texture: '/neptune.jpg',
-		size: 0.8,
-		distance: 45,
-		info: 'Neptune, the farthest planet from the Sun, has the fastest winds in the Solar System, reaching speeds of over 2,100 km/h. Neptune has a thick atmosphere composed mainly of hydrogen, helium, and methane. It has a faint ring system and a strong magnetic field. Neptune has 14 known moons, with Triton being the largest. A day on Neptune (one full rotation) takes about 16 hours, and a year (one orbit around the Sun) takes 165 Earth years.'
-	},
-];
+const planetData = getPlanetsData();
+
 
 // Add Planets to the Scene
 planetData.forEach((data) => {
@@ -162,14 +90,14 @@ planetData.forEach((data) => {
 	const material = new THREE.MeshBasicMaterial({ map: textureLoader.load(data.texture) });
 	const planet = new THREE.Mesh(geometry, material);
 	planet.position.x = data.distance;
-	planet.userData = { name: data.name, size: data.size, distance: data.distance, info: data.info };
+	planet.userData = data;
 	planets.push(planet);
 	scene.add(planet);
 
 	// Create Colored Orbit Line
 	const orbitGeometry = new THREE.RingGeometry(data.distance - 0.05, data.distance + 0.05, 64);
 	const orbitMaterial = new THREE.MeshBasicMaterial({
-		color: orbitColors[data.name],
+		color:data.orbitColor,
 		side: THREE.DoubleSide,
 		transparent: true,
 		opacity: 0.8
@@ -193,9 +121,15 @@ function createTextLabel(text) {
 	context.fillText(text, 0, 20);
 
 	const texture = new THREE.CanvasTexture(canvas);
-	const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
+	const spriteMaterial = new THREE.SpriteMaterial({
+		map: texture,
+		transparent: true,
+		depthTest: false,
+		depthWrite: false
+	});
 	const sprite = new THREE.Sprite(spriteMaterial);
 	sprite.scale.set(5, 2.5, 5);
+
 	return sprite;
 }
 
@@ -225,20 +159,27 @@ function onMouseClick(event) {
 
 	raycaster.setFromCamera(mouse, camera);
 	const intersects = raycaster.intersectObjects([sun, ...planets]);
-
+	//console.log(data)
 	if (intersects.length > 0) {
 		const object = intersects[0].object;
 		const data = object.userData;
 
 		// Show Info
 		const infoDiv = document.getElementById('info');
+        infoDiv.style.display = 'block';
 		infoDiv.innerHTML = `
 			<h2>${data.name}</h2>
-			<p><strong>Details:</strong></p>
 			<p>${data.info}</p>
+			<h4><strong>Details:</strong></h4>
+			<p><strong>Speed:</strong> ${data.speed}</p>
+			<p><strong>Radius:</strong> ${data.radius}</p>
+			<p><strong>Year:</strong> ${data.siderealYear}</p>
+			<p><strong>Surface:</strong> ${data.surface}</p>
+			<p><strong>Volume:</strong> ${data.volume}</p>
+			<p><strong>Radius:</strong> ${data.mass}</p>
 			<button id="collapseButton">Collapse</button>
 		`;
-		infoDiv.style.display = 'block';
+        infoDiv.className = "planetinfo";
 
 		// Add event listener to collapse button
 		document.getElementById('collapseButton').addEventListener('click', () => {
