@@ -28,7 +28,7 @@ starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVerti
 const stars = new THREE.Points(starGeometry, starMaterial);
 scene.add(stars);
 
-// Sun with Glow Effect
+// Sun
 const textureLoader = new THREE.TextureLoader();
 const sunGeometry = new THREE.SphereGeometry(5, 32, 32);
 const sunMaterial = new THREE.MeshBasicMaterial({ map: textureLoader.load('/sun.jpg') });
@@ -36,47 +36,14 @@ const sun = new THREE.Mesh(sunGeometry, sunMaterial);
 // Sun userData
 sun.userData = {
 	name: 'Sun',
-	info: 'The Sun is the star at the center of the Solar System. It provides light and heat to all planets. It is a nearly perfect sphere of hot plasma and is by far the most important source of energy for life on Earth. The Sun has no solid surface and consists mostly of hydrogen and helium.'
+	info: 'The Sun is the star at the center of the Solar System. It provides light and heat to all planets.',
+	speed: 'N/A',
+	radius: '696,340 km',
+	siderealYear: 'N/A',
+	surface: '6.09x10^12 km²',
+	volume: '1.41x10^18 km³',
 };
 
-// Glow Effect for the Sun
-const createGlow = (innerRadius, outerRadius, color) => {
-	const glowGeometry = new THREE.SphereGeometry(innerRadius, 32, 32);
-	const glowMaterial = new THREE.ShaderMaterial({
-		uniforms: {
-			c: { value: 0.5 },
-			p: { value: 3.0 },
-			glowColor: { value: new THREE.Color(color) },
-			viewVector: { value: camera.position },
-		},
-		vertexShader: `
-			uniform vec3 viewVector;
-			uniform float c;
-			uniform float p;
-			varying float intensity;
-			void main() {
-				vec3 vNormal = normalize(normalMatrix * normal);
-				vec3 vNormView = normalize(viewVector - modelViewMatrix * vec4(position, 1.0));
-				intensity = pow(c - dot(vNormal, vNormView), p);
-				gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-			}`,
-		fragmentShader: `
-			uniform vec3 glowColor;
-			varying float intensity;
-			void main() {
-				gl_FragColor = vec4(glowColor, intensity);
-			}`,
-		side: THREE.FrontSide,
-		blending: THREE.AdditiveBlending,
-		transparent: true,
-	});
-	const glowMesh = new THREE.Mesh(glowGeometry, glowMaterial);
-	glowMesh.scale.set(outerRadius / innerRadius, outerRadius / innerRadius, outerRadius / innerRadius);
-	return glowMesh;
-};
-
-const sunGlow = createGlow(5, 10, 0xffff00);
-sun.add(sunGlow);
 scene.add(sun);
 
 // Planets
@@ -97,7 +64,7 @@ planetData.forEach((data) => {
 	// Create Colored Orbit Line
 	const orbitGeometry = new THREE.RingGeometry(data.distance - 0.05, data.distance + 0.05, 64);
 	const orbitMaterial = new THREE.MeshBasicMaterial({
-		color:data.orbitColor,
+		color: data.orbitColor,
 		side: THREE.DoubleSide,
 		transparent: true,
 		opacity: 0.8
@@ -159,43 +126,48 @@ function onMouseClick(event) {
 
 	raycaster.setFromCamera(mouse, camera);
 	const intersects = raycaster.intersectObjects([sun, ...planets]);
-	//console.log(data)
+
 	if (intersects.length > 0) {
 		const object = intersects[0].object;
 		const data = object.userData;
 
 		// Show Info
 		const infoDiv = document.getElementById('info');
-        infoDiv.style.display = 'block';
+		infoDiv.style.display = 'block';
 		infoDiv.innerHTML = `
-			<h2>${data.name}</h2>
-			<p>${data.info}</p>
-			<h4><strong>Details:</strong></h4>
-			<p><strong>Speed:</strong> ${data.speed}</p>
-			<p><strong>Radius:</strong> ${data.radius}</p>
-			<p><strong>Year:</strong> ${data.siderealYear}</p>
-			<p><strong>Surface:</strong> ${data.surface}</p>
-			<p><strong>Volume:</strong> ${data.volume}</p>
-			<p><strong>Radius:</strong> ${data.mass}</p>
-			<button id="collapseButton">Collapse</button>
-		`;
-        infoDiv.className = "planetinfo";
+            <h2>${data.name}</h2>
+            <p>${data.info}</p>
+            <h4><strong>Details:</strong></h4>
+            <p><strong>Speed:</strong> ${data.speed}</p>
+            <p><strong>Radius:</strong> ${data.radius}</p>
+            <p><strong>Year:</strong> ${data.siderealYear}</p>
+            <p><strong>Surface:</strong> ${data.surface}</p>
+            <p><strong>Volume:</strong> ${data.volume}</p>
+            <p><strong>Mass:</strong> ${data.mass}</p>
+            <button id="collapseButton">Collapse</button>
+        `;
+		infoDiv.className = "planetinfo";
 
 		// Add event listener to collapse button
 		document.getElementById('collapseButton').addEventListener('click', () => {
 			infoDiv.style.display = 'none';
 		});
 
-		// Zoom into object
+		// Update Camera Target
+		controls.target.copy(object.position); // Set the target to the clicked object
+		controls.update();
+
+		// Smooth Camera Zoom
 		gsap.to(camera.position, {
-			x: object.position.x,
-			y: object.position.y,
+			x: object.position.x + 10,
+			y: object.position.y + 10,
 			z: object.position.z + 10,
 			duration: 1.5,
 			onUpdate: () => controls.update(),
 		});
 	}
 }
+
 
 // Attach Events
 window.addEventListener('click', onMouseClick);
