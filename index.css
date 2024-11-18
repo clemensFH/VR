@@ -3,6 +3,7 @@
     width: 20%;
     border: 3px solid yellow;
     border-radius: 5px;
+    max-height: 90%;
 }
 
 .planetinfo h2 {
