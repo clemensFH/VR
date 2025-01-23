@@ -4,6 +4,11 @@
     border: 3px solid yellow;
     border-radius: 5px;
     max-height: 90%;
+    overflow: auto; /* Allow scrolling if content overflows */
+    padding: 10px; /* Add padding for better spacing */
+    background-color: rgba(0, 0, 0, 0.8); /* Optional: Semi-transparent background for better contrast */
+    color: white; /* Ensure text is readable */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Optional: Add a shadow for visual depth */
 }
 
 .planetinfo h2 {
